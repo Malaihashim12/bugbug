@@ -103,7 +103,9 @@ def get_fixed_by_commit_pushes():
 
     while start < today:
         end = min(start + timedelta(days=7), today)
-        logger.info(f"Retrieving 'fixed by commit' data between {start} and {end}...")
+        logger.info(
+            "Retrieving 'fixed by commit' data between %s and %s...", start, end
+        )
         fixed_by_commit_elements += query_redash(start, end)
         start = end
 
@@ -134,7 +136,7 @@ def get_fixed_by_commit_pushes():
             }
         )
 
-    logger.info(f"Analyzing {len(fixed_by_commit_pushes)} 'fixed by commit' pushes.")
+    logger.info("Analyzing %s 'fixed by commit' pushes.", len(fixed_by_commit_pushes))
 
     backouts_by_bug_id = defaultdict(int)
     for commit in repository.get_commits(include_backouts=True):
@@ -153,14 +155,14 @@ def get_fixed_by_commit_pushes():
             no_relanding_bugs.add(bug_id)
 
     logger.info(
-        f"{len(no_relanding_bugs)} cases removed because there was no relanding."
+        "%s cases removed because there was no relanding.", len(no_relanding_bugs)
     )
 
     for bug_id in no_relanding_bugs:
         del fixed_by_commit_pushes[bug_id]
 
     logger.info(
-        f"{len(fixed_by_commit_pushes)} 'fixed by commit' pushes left to analyze."
+        "%s 'fixed by commit' pushes left to analyze.", len(fixed_by_commit_pushes)
     )
 
     # Skip cases where there are multiple backouts associated to the same bug ID.
@@ -171,14 +173,15 @@ def get_fixed_by_commit_pushes():
                 multiple_backouts.add(bug_id)
 
     logger.info(
-        f"{len(multiple_backouts)} cases to be removed because there were multiple backouts in the same bug."
+        "%s cases to be removed because there were multiple backouts in the same bug.",
+        len(multiple_backouts),
     )
 
     for multiple_backout in multiple_backouts:
         del fixed_by_commit_pushes[multiple_backout]
 
     logger.info(
-        f"{len(fixed_by_commit_pushes)} 'fixed by commit' pushes left to analyze."
+        "%s 'fixed by commit' pushes left to analyze.", len(fixed_by_commit_pushes)
     )
 
     # Skip cases where there is no backout (and so the fix was a bustage fix).
@@ -192,14 +195,15 @@ def get_fixed_by_commit_pushes():
             no_backouts.add(bug_id)
 
     logger.info(
-        f"{len(no_backouts)} cases to be removed because there were no backouts in the bug."
+        "%s cases to be removed because there were no backouts in the bug.",
+        len(no_backouts),
     )
 
     for no_backout in no_backouts:
         del fixed_by_commit_pushes[no_backout]
 
     logger.info(
-        f"{len(fixed_by_commit_pushes)} 'fixed by commit' pushes left to analyze."
+        "%s 'fixed by commit' pushes left to analyze.", len(fixed_by_commit_pushes)
     )
 
     # TODO: skip cases where a single push contains multiple backouts?
@@ -356,8 +360,8 @@ def generate_diffs(repo_url, repo_path, fixed_by_commit_pushes, upload):
         else:
             diff_errors += 1
 
-    logger.info(f"Failed mapping {mapping_errors} hashes")
-    logger.info(f"Failed generating {diff_errors} diffs")
+    logger.info("Failed mapping %s hashes", mapping_errors)
+    logger.info("Failed generating %s diffs", diff_errors)
 
 
 def write_results(fixed_by_commit_pushes):

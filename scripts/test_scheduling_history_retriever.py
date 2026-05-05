@@ -118,7 +118,7 @@ class Retriever(object):
                         yield value
                     except mozci.errors.MissingDataError:
                         logger.warning(
-                            f"Tasks for push {push.rev} can't be found on ActiveData"
+                            "Tasks for push %s can't be found on ActiveData", push.rev
                         )
                     except Exception:
                         num_errors += 1

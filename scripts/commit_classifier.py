@@ -315,7 +315,7 @@ class CommitClassifier(object):
         # Update repo to base revision
         hg_base = needed_stack[0].base_revision
         if not self.has_revision(hg, hg_base):
-            logger.warning("Missing base revision {} from Phabricator".format(hg_base))
+            logger.warning("Missing base revision %s from Phabricator", hg_base)
             hg_base = "default"
 
         if hg_base:
@@ -455,8 +455,8 @@ class CommitClassifier(object):
                 clean_X <= median
             ).sum() / clean_X.shape[0]
 
-            logger.info("Feature: {}".format(name))
-            logger.info("Shap value: {}{}".format("+" if (is_positive) else "-", val))
+            logger.info("Feature: %s", name)
+            logger.info("Shap value: %s%s", "+" if is_positive else "-", val)
             logger.info("spearman: %f", spearman)
             logger.info("value: %f", value)
             logger.info("overall mean: %f", np.mean(X))

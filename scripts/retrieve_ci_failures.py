@@ -102,7 +102,7 @@ def get_fixed_by_commit_pushes():
     start = end - timedelta(days=120)
 
     while start < today:
-        end = min(start + timedelta(days=7), today)
+        end = min(start + timedelta(days=3), today)
         logger.info(
             "Retrieving 'fixed by commit' data between %s and %s...", start, end
         )

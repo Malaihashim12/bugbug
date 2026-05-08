@@ -37,27 +37,20 @@ def get_try_pushes_and_jobs(last_push_id):
         """
         https://sql.telemetry.mozilla.org/queries/119580/source
 
-        WITH pushes AS
-        (SELECT DISTINCT ON (c.push_id) c.push_id AS id,
-                            c.revision
-        FROM push p
-        JOIN COMMIT c ON c.push_id = p.id
-        WHERE p.repository_id = 4
-            AND p.time > '{{ startdate }}'
-            AND p.time < CAST('{{ enddate }}' AS DATE) + INTERVAL '1' DAY
-            AND p.id > COALESCE({{ last_push_id }}, 0)
-        ORDER BY c.push_id,
-                    c.id DESC)
         SELECT p.id,
-            p.revision,
-            jt.name AS job_name,
-            j.result
-        FROM pushes p
+               p.revision,
+               jt.name AS job_name,
+               j.result
+        FROM push p
         JOIN job j ON j.push_id = p.id
-        JOIN job_type jt ON j.job_type_id = jt.id
+        JOIN job_type jt ON jt.id = j.job_type_id
+        WHERE p.repository_id = 4
+          AND p.time > '{{ startdate }}'
+          AND p.time < CAST('{{ enddate }}' AS DATE) + INTERVAL '1 day'
+          AND p.id > COALESCE({{ last_push_id }}, 0)
         ORDER BY p.id,
-                jt.name,
-                j.result;
+                 jt.name,
+                 j.result;
         """
         pushes += utils.query_redash(
             119580,

@@ -45,12 +45,13 @@ def download_dbs():
     db.download(CI_FAILURES_DB)
 
 
-def get_fixed_by_commit_data(start, end):
+def get_fixed_by_commit_data(start, end, last_push_id):
     return utils.query_redash(
         111789,
         {
             "startdate": start.strftime("%Y-%m-%d"),
             "enddate": end.strftime("%Y-%m-%d"),
+            "last_push_id": last_push_id,
         },
     )
 
@@ -63,6 +64,15 @@ def get_fixed_by_commit_pushes():
             "failures": push["failures"],
             "commits": [],
         }
+
+    # Retrieve the last processed push ID
+    # Subtract 350 so we reprocess some pushes that might have some new data now
+    r = utils.get_session("hgmo").get(
+        f"https://hg-edge.mozilla.org/integration/autoland/json-pushes?version=2&tipsonly=1&fromchange={push['failure_commits'][0]}"
+    )
+    r.raise_for_status()
+    last_push_id = int(list(r.json()["pushes"].keys())[0]) - 350
+
     logger.info("Got %d failures.", len(fixed_by_commit_pushes))
 
     fixed_by_commit_elements = []
@@ -76,7 +86,7 @@ def get_fixed_by_commit_pushes():
         logger.info(
             "Retrieving 'fixed by commit' data between %s and %s...", start, end
         )
-        fixed_by_commit_elements += get_fixed_by_commit_data(start, end)
+        fixed_by_commit_elements += get_fixed_by_commit_data(start, end, last_push_id)
         start = end
 
     fixed_by_commit_elements = [

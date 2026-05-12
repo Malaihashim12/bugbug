@@ -31,7 +31,7 @@ def get_try_pushes_and_jobs(last_push_id):
     start = end - timedelta(days=42)
 
     while start < yesterday:
-        end = min(start + timedelta(days=2), yesterday)
+        end = min(start + timedelta(days=1), yesterday)
         logger.info("Retrieving 'try pushes' data between %s and %s...", start, end)
 
         """

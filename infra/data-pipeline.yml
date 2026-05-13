@@ -401,7 +401,7 @@ tasks:
           - retrieve
           - label
           - --reretrieve=0
-          - --training-months=8
+          - --training-months=12
 
         artifacts:
           public/push_data_label.json.zst:
@@ -519,7 +519,7 @@ tasks:
           - bugbug-data-test-scheduling-history
           - generate
           - label
-          - --training-months=8
+          - --training-months=12
 
         artifacts:
           public/test_label_scheduling_history.pickle.zst:

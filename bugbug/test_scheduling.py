@@ -118,8 +118,8 @@ JOBS_TO_IGNORE = (
     "browsertime",
     "backlog",
     # inclusive test suites -- these *only* run when certain files have changed
-    "-test-verify-",
-    "-test-coverage-",
+    "-test-verify",
+    "-test-coverage",
     "jittest",
     "jsreftest",
     "android-hw-gfx",

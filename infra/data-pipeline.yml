@@ -1236,6 +1236,7 @@ tasks:
       dependencies:
         - commit-retrieval
         - test-label-scheduling-history-generator
+        - test-group-scheduling-history-generator
       payload:
         maxRunTime: 25200
         image: mozilla/bugbug-base:${version}

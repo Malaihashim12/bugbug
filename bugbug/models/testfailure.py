@@ -56,6 +56,7 @@ class TestFailureModel(CommitModel):
         CommitModel.__init__(self, lemmatization)
 
         self.training_dbs.append(test_scheduling.TEST_LABEL_SCHEDULING_DB)
+        self.training_dbs.append(test_scheduling.TEST_GROUP_SCHEDULING_DB)
 
         feature_extractors = [
             commit_features.SourceCodeFileSize(),
@@ -148,6 +149,17 @@ class TestFailureModel(CommitModel):
             ):
                 classes[rev] = 1
             else:
+                classes[rev] = 0
+
+        for revs, test_datas in test_scheduling.get_test_scheduling_history("group"):
+            rev = revs[0]
+
+            if any(
+                test_data["is_likely_regression"] or test_data["is_possible_regression"]
+                for test_data in test_datas
+            ):
+                classes[rev] = 1
+            elif rev not in classes:
                 classes[rev] = 0
 
         logger.info("%d commits failed", sum(label == 1 for label in classes.values()))

@@ -1475,6 +1475,41 @@ tasks:
         owner: bugbug-team@mozilla.com
         source: ${repository}/raw/master/data-pipeline.yml
 
+    - ID: train-severity
+      created: { $fromNow: "" }
+      deadline: { $fromNow: "3 days" }
+      expires: { $fromNow: "1 year" }
+      provisionerId: proj-bugbug
+      workerType: compute-small
+      dependencies:
+        - bugs-retrieval
+      payload:
+        maxRunTime: 25200
+        image: mozilla/bugbug-base:${version}
+        command:
+          - bugbug-train
+          - severity
+
+        artifacts:
+          public/severitymodel.tar.zst:
+            path: /severitymodel.tar.zst
+            type: file
+          public/metrics.json:
+            path: /metrics.json
+            type: file
+
+      routes:
+        - notify.email.bugbug-team@mozilla.com.on-failed
+        - index.project.bugbug.train_severity.${version}
+        - index.project.bugbug.train_severity.per_version.${version}.${year}.${month}.${day}.${hour}.${minute}.${second}
+        - index.project.bugbug.train_severity.per_date.${year}.${month}.${day}.${hour}.${minute}.${second}.${version}
+        - index.project.bugbug.train_severity.latest
+      metadata:
+        name: bugbug train severity model
+        description: bugbug train severity model
+        owner: bugbug-team@mozilla.com
+        source: ${repository}/raw/master/data-pipeline.yml
+
     - ID: check_metrics
       created: { $fromNow: "" }
       deadline: { $fromNow: "5 days" }
@@ -1498,6 +1533,7 @@ tasks:
         - train-worksforme
         - train-fenixcomponent
         - train-invalidcompatibilityreport
+        - train-severity
       payload:
         maxRunTime: 3600
         image: mozilla/bugbug-base:${version}

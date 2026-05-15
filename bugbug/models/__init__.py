@@ -28,6 +28,7 @@ MODELS = {
     "regression": "bugbug.models.regression.RegressionModel",
     "regressionrange": "bugbug.models.regressionrange.RegressionRangeModel",
     "regressor": "bugbug.models.regressor.RegressorModel",
+    "severity": "bugbug.models.severity.SeverityModel",
     "spambug": "bugbug.models.spambug.SpamBugModel",
     "stepstoreproduce": "bugbug.models.stepstoreproduce.StepsToReproduceModel",
     "testlabelselect": "bugbug.models.testselect.TestLabelSelectModel",

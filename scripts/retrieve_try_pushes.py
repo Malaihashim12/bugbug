@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from logging import INFO, basicConfig, getLogger
 
+import mozci.push
 from tqdm import tqdm
 
 from bugbug import db, utils
@@ -23,44 +24,77 @@ db.register(
 )
 
 
-def get_try_pushes_and_jobs(last_push_id):
+def query_try_pushes(first_push_id, last_push_id):
+    # https://sql.telemetry.mozilla.org/queries/119580/source
+    # SELECT p.id,
+    #         p.revision,
+    #         jt.name AS job_name,
+    #         j.result
+    # FROM push p
+    # JOIN job j ON j.push_id = p.id
+    # JOIN job_type jt ON jt.id = j.job_type_id
+    # WHERE p.repository_id = 4
+    #     AND p.id >= {{ first_push_id }}
+    #     AND p.id <= {{ last_push_id }}
+    # ORDER BY p.id,
+    #             jt.name,
+    #             j.result;
+    return utils.query_redash(
+        119580,
+        {
+            "first_push_id": first_push_id,
+            "last_push_id": last_push_id,
+        },
+    )
+
+
+def get_try_pushes_and_jobs(last_processed_push_id):
     pushes = []
 
     # Treeherder stores 42 days of data for try.
-    end = yesterday = datetime.today() - timedelta(days=1)
+    end = datetime.today() - timedelta(days=1)
     start = end - timedelta(days=42)
 
-    while start < yesterday:
-        end = min(start + timedelta(days=1), yesterday)
-        logger.info("Retrieving 'try pushes' data between %s and %s...", start, end)
+    first_push_id = mozci.push.make_push_objects(
+        from_date=start.strftime("%Y-%m-%d"),
+        to_date=(start + timedelta(days=1)).strftime("%Y-%m-%d"),
+        branch="try",
+    )[0].id
+    last_push_id = mozci.push.make_push_objects(
+        from_date=(end - timedelta(days=1)).strftime("%Y-%m-%d"),
+        to_date=end.strftime("%Y-%m-%d"),
+        branch="try",
+    )[-1].id
 
-        """
-        https://sql.telemetry.mozilla.org/queries/119580/source
+    if first_push_id <= last_processed_push_id:
+        first_push_id = last_processed_push_id + 1
 
-        SELECT p.id,
-               p.revision,
-               jt.name AS job_name,
-               j.result
-        FROM push p
-        JOIN job j ON j.push_id = p.id
-        JOIN job_type jt ON jt.id = j.job_type_id
-        WHERE p.repository_id = 4
-          AND p.time > '{{ startdate }}'
-          AND p.time < CAST('{{ enddate }}' AS DATE) + INTERVAL '1 day'
-          AND p.id > COALESCE({{ last_push_id }}, 0)
-        ORDER BY p.id,
-                 jt.name,
-                 j.result;
-        """
-        pushes += utils.query_redash(
-            119580,
-            {
-                "startdate": start.strftime("%Y-%m-%d"),
-                "enddate": end.strftime("%Y-%m-%d"),
-                "last_push_id": last_push_id,
-            },
-        )
-        start = end
+    MAX_BATCH_SIZE = 210
+    MIN_BATCH_SIZE = 1
+
+    current = first_push_id
+
+    with tqdm(total=last_push_id - first_push_id + 1) as pbar:
+        while current <= last_push_id:
+            batch_size = min(MAX_BATCH_SIZE, last_push_id - current + 1)
+
+            while batch_size >= MIN_BATCH_SIZE:
+                first = current
+                last = min(current + batch_size - 1, last_push_id)
+
+                try:
+                    pushes += query_try_pushes(first, last)
+                except Exception:
+                    if batch_size == MIN_BATCH_SIZE:
+                        raise
+
+                    batch_size = max(MIN_BATCH_SIZE, batch_size // 2)
+                    continue
+
+                processed = last - first + 1
+                current = last + 1
+                pbar.update(processed)
+                break
 
     return pushes
 

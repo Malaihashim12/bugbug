@@ -546,7 +546,7 @@ class Model:
                     y_pred_filter.append(argmax)
 
             if not is_multilabel:
-                y_pred_filter = np.array(y_pred_filter)
+                y_pred_filter = np.array(y_pred_filter, dtype=object)
                 y_pred_filter[classified_indices] = self.le.inverse_transform(
                     np.array(y_pred_filter[classified_indices], dtype=int)
                 )
